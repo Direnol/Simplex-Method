@@ -1,0 +1,17 @@
+[package]
+name = "rsimpl"
+version = "0.1.0"
+authors = ["Roman Mingazeev <direnol@yandex.ru>"]
+
+[profile.dev]
+debug = true
+opt-level = 0
+
+[lib]
+path = "src/lib.rs"
+
+
+[dependencies]
+serde = "1.0.79"
+serde_json = "1.0"
+serde_derive = "*"
