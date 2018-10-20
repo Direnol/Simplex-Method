@@ -9,8 +9,8 @@ fn main() -> Result<(), Box<Error>> {
     let conf_file = args.get(1).ok_or("Not enough argument".to_string())?;
     let file = File::open(conf_file)?;
     let mut simplex = simplex::load(file)?;
-//    println!("{}", simplex);
+    println!("{}", simplex);
     let res = simplex.run().ok_or("No exist solution")?;
-    println!("Result {:?}\n", res);
+    println!("{}\nResult {:?}\n", simplex, res);
     Ok(())
 }
