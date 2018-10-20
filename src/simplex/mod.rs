@@ -40,7 +40,7 @@ pub fn load(f: File) -> Result<Simplex> {
 
     let mut func = vec![1.0];
     for i in conf.x.iter().map(|x| -x) {
-        func.push(i)
+        func.push(i as f64);
     }
 
     for (line, c) in conf.cond.iter().enumerate() {
