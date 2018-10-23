@@ -2,6 +2,7 @@ use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::fmt::{Display, Error, Formatter};
 use std::ops::{Deref, Index, IndexMut};
+use std::io::Read;
 
 #[derive(Debug, Clone)]
 pub enum SimplexMethod {
@@ -60,11 +61,12 @@ impl Simplex {
     fn lead<F, P>(&self, f: F, p: P) -> (usize, usize)
         where F: FnMut((usize, f64), (usize, f64)) -> (usize, f64),
               P: FnMut((usize, f64), (usize, &f64)) -> (usize, f64) {
-        let acc = (0usize, self.res.first().unwrap().clone());
-
-        let (min_col, _) = self.mat.last().unwrap().iter().enumerate()
+        let acc = (0usize, self.mat.last().unwrap().first().unwrap().clone());
+        let (min_col, min_cv) = self.mat.last().unwrap().iter().enumerate()
             .fold(acc, p);
-        let (min_row, _) = self.res[..(self.res.len() - 1)].iter().enumerate()
+        println!("col: {} {}", min_col, min_cv);
+        let acc = (0usize, self.res.first().unwrap().clone());
+        let (min_row, min_rv) = self.res[..(self.res.len() - 1)].iter().enumerate()
             .map(|(i, x)| {
                 let i = self[i][min_col];
                 *x / i
@@ -73,6 +75,7 @@ impl Simplex {
                 x.is_finite() && *x >= 0.0
             })
             .enumerate().fold(acc, f);
+        println!("row: {} {}", min_row, min_rv);
         (min_row, min_col)
     }
 
@@ -118,7 +121,7 @@ impl Simplex {
             }
         };
 
-        while self.mat.last().unwrap().iter().any(|x| x.is_sign_negative()) {
+        while self.mat.last().unwrap()[1..].iter().any(|x| x < &0.0) {
             let change = self.iteration(f, p);
             self.names[change.0] = change.1;
         }
@@ -139,20 +142,27 @@ impl Simplex {
 
     fn minimization(&mut self) -> Solution {
         let f: fn((usize, f64), (usize, f64)) -> (usize, f64) = |x: (usize, f64), y: (usize, f64)| {
+            println!("y: {:?}|", y);
             match x.1.partial_cmp(&y.1).unwrap() {
                 Ordering::Greater => x,
                 _ => y
             }
         };
         let p = |(i, x): (usize, f64), (j, y): (usize, &f64)| {
+//            print!("y: {}", y);
             match x.partial_cmp(y).unwrap() {
                 Ordering::Greater => (i, x),
                 _ => (j, *y)
             }
         };
-        while self.mat.last().unwrap().iter().any(|x| x.is_sign_positive()) {
+        let mut buf = [0u8; 64];
+        while self.mat.last().unwrap()[1..].iter().any(|x| x > &0.0) {
+            println!("Before: {}", self);
             let change = self.iteration(f, p);
+            println!("Changed: {:?}", change);
             self.names[change.0] = change.1;
+            println!("After: {}", self);
+            ::std::io::stdin().read(&mut buf);
         }
 
         let mut res = HashMap::new();
